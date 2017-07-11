@@ -10,3 +10,18 @@
   ;; fontify code in code blocks
   (setq org-src-fontify-natively t)
 #+END_SRC
+* Packages
+** Try
+#+BEGIN_SRC emacs-lisp
+  (use-package try
+          :ensure t)
+#+END_SRC
+** Magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :init
+    (progn
+      (bind-key "C-x g" 'magit-status)
+      ))
+#+END_SRC
