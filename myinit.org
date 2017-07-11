@@ -1,0 +1,12 @@
+#+AUTHOR: Neal Haas
+#+STARTUP: content
+
+* Interface
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-screen t)
+#+END_SRC
+* Org Mode
+#+BEGIN_SRC emacs-lisp
+  ;; fontify code in code blocks
+  (setq org-src-fontify-natively t)
+#+END_SRC
