@@ -2,20 +2,120 @@
 #+STARTUP: content
 
 * Interface
+** Settings
+Disable Emacs Welcome screen, start maximized and with only 1 buffer.
+Show the line number, column number and time.
+Do not wrap lines, show opposite parentheses.
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-screen t)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+  (add-hook 'emacs-startup-hook (lambda () (delete-other-windows)) t)
+  (line-number-mode t)
+  (column-number-mode t)
+  (display-time)
+  (setq-default truncate-lines t)
+  (show-paren-mode t)  ;; Always highlight opposite paretheses
+  (blink-cursor-mode 0)
+  (setq tab-width 2)
+  (fset 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
+
+** Themes
+
+* Global Settings
+
+Load custom ELisp files in ~/elisp
+
+#+BEGIN_SRC emacs-lisp
+  ;; Look first in the directory ~/elisp for elisp files
+  (setq load-path (cons (expand-file-name "~/elisp") load-path))
+#+END_SRC
+
+Enable Auto Revert Buffer to automatically relaod buffer when the file changes on disk.
+Increase 'buffer' column width in buffer list view.
+Make the save files go to the same dir and not the dir of each file.
+
+#+BEGIN_SRC emacs-lisp
+  (global-auto-revert-mode 1)
+  (setq Buffer-menu-name-width 60)
+  (setq backup-directory-alist '(("." . "~/.emacs_saves")))
+  (setq-default fill-column 80)
+#+END_SRC
+
+* Key Bindings
+** HideShow custom keybindings
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c <right>") 'hs-show-block)
+  (global-set-key (kbd "C-c <left>") 'hs-hide-block)
+  (global-set-key (kbd "C-c <up>") 'hs-hide-all)
+  (global-set-key (kbd "C-c <down>") 'hs-show-all)
+#+END_SRC
+
+** Global Stuff
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'electric-buffer-list)
+  (global-set-key [f2] 'help)
+  (global-set-key [f3] 'my-revert-buffer)
+  (global-set-key [f4] 'my-unhighligh-changes)
+  (global-set-key [f5] 'align-repeat)
+  (global-set-key [f6] 'search-all-buffers)
+  (global-set-key [f7] 'query-swap-regexp)
+  (global-set-key [f8] 'ffap)
+  ;; (global-set-key [f9] 'cout)
+  ;; (global-set-key [f10] 'design-sync-diff)
+  ;; (global-set-key [f11] 'design-sync-check-out-cancel)
+  ;; (global-set-key [f12] 'cin)
+  (global-set-key (kbd "C-x C-b") 'electric-buffer-list)
+#+END_SRC
+
 * Org Mode
+Custom changes for using Org Mode.
+#+BEGIN_SRC emacs-lisp
+  (custom-set-variables
+   '(org-cycle-emulate-tab nil)
+   '(org-hide-leading-stars t)
+   '(org-startup-folded (quote overview))
+   '(org-startup-indented t))
+#+END_SRC
+
+To configure "native fontification", set the following:
+
 #+BEGIN_SRC emacs-lisp
   ;; fontify code in code blocks
   (setq org-src-fontify-natively t)
 #+END_SRC
+
+Define these faces, in your .emacs file, before requiring Org (if you don't have your own color theme):
+
+# #+BEGIN_SRC emacs-lisp
+#   (defface org-block-begin-line
+#     '((t (:underline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+#     "Face used for the line delimiting the begin of source blocks.")
+
+#   (defface org-block-background
+#     '((t (:background "#FFFFEA")))
+#     "Face used for the source block background.")
+
+#   (defface org-block-end-line
+#     '((t (:overline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+#     "Face used for the line delimiting the end of source blocks.")
+# #+END_SRC
+
+* Perl Mode
+
+#+BEGIN_SRC emacs-lisp
+  (setq perl-indent-parens-as-block t)
+  (setq perl-indent-level 2)
+#+END_SRC
+
 * Packages
 ** Try
+Try is a package that allows you to try out Emacs packages without installing them.
 #+BEGIN_SRC emacs-lisp
   (use-package try
-          :ensure t)
+    :ensure t)
 #+END_SRC
+
 ** Magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit
@@ -25,3 +125,341 @@
       (bind-key "C-x g" 'magit-status)
       ))
 #+END_SRC
+
+** Tramp
+
+** Swiper / Ivy / Counsel
+Swiper gives us a really efficient incremental search with regular expressions and Ivy / Counsel replace a lot of ido or helms completion functionality.
+Credit : [[https://github.com/zamansky/using-emacs/blob/master/myinit.org][zamansky / using-emacs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package counsel
+    :ensure t
+    :bind
+    (("M-y" . counsel-yank-pop)
+     :map ivy-minibuffer-map
+     ("M-y" . ivy-next-line)))
+
+  (use-package ivy
+    :ensure t
+    :diminish (ivy-mode)
+    :bind (("C-x b" . ivy-switch-buffer))
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-display-style 'fancy))
+
+
+  (use-package swiper
+    :ensure t
+    :bind (("C-s" . swiper)
+           ("C-r" . swiper)
+           ("C-c C-r" . ivy-resume)
+           ("M-x" . counsel-M-x)
+           ("C-x C-f" . counsel-find-file))
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+      ))
+#+END_SRC
+
+** Which-key
+Brings up some help
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t 
+    :config
+    (which-key-mode))
+#+END_SRC
+
+** Visual Regexp
+#+BEGIN_SRC emacs-lisp
+  (use-package visual-regexp
+    :ensure t
+    :init
+    (progn
+      (define-key global-map (kbd "C-x h") 'vr/replace)
+      (define-key global-map (kbd "C-h")   'vr/query-replace)
+      ))
+#+END_SRC
+
+** Smart Parens
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens
+    :ensure t
+    :config
+    (smartparens-global-mode t))
+#+END_SRC
+
+#+RESULTS:
+
+** Undo Tree Visualization
+#+BEGIN_SRC emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode))
+#+END_SRC
+
+** Misc Packages
+*** hungry-delete
+#+BEGIN_SRC emacs-lisp
+  ;; deletes all the whitespace when you hit backspace or delete
+  (use-package hungry-delete
+    :ensure t
+    :config
+    (global-hungry-delete-mode))
+#+END_SRC
+
+*** expand-region
+#+BEGIN_SRC emacs-lisp
+  ;; expand the marked region in semantic increments (negative prefix to reduce region)
+  (use-package expand-region
+    :ensure t
+    :config 
+    (global-set-key (kbd "C-=") 'er/expand-region))
+#+END_SRC
+
+** Themes
+#+BEGIN_SRC emacs-lisp
+  (use-package zenburn-theme
+    :ensure t )
+  ;; (use-package monokai-theme
+  ;;   :ensure t )
+  ;; (use-package moe-theme
+  ;;   :ensure t )
+  ;; (use-package material-theme
+  ;;   :ensure t )
+#+END_SRC
+
+* My Methods
+
+((
+((aoienars))
+** Universal
+*** Repeating align-regexp [fn:1]
+#+BEGIN_SRC emacs-lisp
+  (defun align-repeat (start end regexp)
+    "Repeat alignment with respect to the given regular
+       expression."
+    (interactive "r\nsAlign regexp: ")
+    (align-regexp start end 
+                  (concat "\\(\\s-*\\)" regexp) 1 1 t))
+
+  (defadvice align-regexp (around algin-regexp-with-spaces activate)
+    (let ((indent-tabs-mode nil))
+      ad-do-it))
+#+END_SRC
+The final t (aka true) is responsible for repeating the task. Call that command with the regular expression [[[[:space:]]]]+
+
+*** Check ffap string for line-number and goto it (using advice) [fn:2]
+
+Useful e.g. for output from grep -nH. Expects file-name:line-number.
+
+#+BEGIN_SRC emacs-lisp
+  (defvar ffap-file-at-point-line-number nil
+    "Variable to hold line number from the last `ffap-file-at-point' call.")
+
+  (defadvice ffap-file-at-point (after ffap-store-line-number activate)
+    "Search `ffap-string-at-point' for a line number pattern and
+  save it in `ffap-file-at-point-line-number' variable."
+    (let* ((string (ffap-string-at-point)) ;; string/name definition copied from `ffap-string-at-point'
+           (name
+            (or (condition-case nil
+                    (and (not (string-match "//" string)) ; foo.com://bar
+                         (substitute-in-file-name string))
+                  (error nil))
+                string))
+           (line-number-string 
+            (and (string-match ":[0-9]+" name)
+                 (substring name (1+ (match-beginning 0)) (match-end 0))))
+           (line-number
+            (and line-number-string
+                 (string-to-number line-number-string))))
+      (if (and line-number (> line-number 0)) 
+          (setq ffap-file-at-point-line-number line-number)
+        (setq ffap-file-at-point-line-number nil))))
+
+  (defadvice find-file-at-point (after ffap-goto-line-number activate)
+    "If `ffap-file-at-point-line-number' is non-nil goto this line."
+    (when ffap-file-at-point-line-number
+      (goto-line ffap-file-at-point-line-number)
+      (setq ffap-file-at-point-line-number nil)))
+#+END_SRC
+
+*** query-swap-regexp
+I doubt I wrote this, but I'm not sure where it came from.
+#+BEGIN_SRC emacs-lisp
+  (defun query-swap-regexp (regexp-a regexp-b)
+    "Swap A and B regexp matches in current buffer or region."
+    (interactive "sRegexp A: \nsRegexp B: ")
+    (let ((match-a (save-excursion
+                     (re-search-forward regexp-a nil t)
+                     (match-string 0)))
+          (match-b (save-excursion
+                     (re-search-forward regexp-b nil t)
+                     (match-string 0))))
+      (query-replace-regexp
+       (concat "\\(\\(" regexp-a "\\)\\|" regexp-b "\\)")
+       '(replace-eval-replacement
+         replace-quote
+         (if (match-string 2) ,match-b ,match-a))
+       nil
+       (if (and transient-mark-mode mark-active) (region-beginning))
+       (if (and transient-mark-mode mark-active) (region-end)))))
+#+END_SRC
+
+*** revert-buffer
+#+BEGIN_SRC emacs-lisp
+  ;; Revert-buffer
+  (defun my-revert-buffer ()
+    "Revert buffer on command."
+    (interactive)
+    (revert-buffer t t t))
+#+END_SRC
+
+*** How to show the matching paren when it is offscreen [fn:3]
+
+When the matching paren is offscreen, show-paren-mode highlights only the paren at point. It is more useful to show the line of matching paren in the minibuffer. Execute the following to get this behavior:
+
+#+BEGIN_SRC emacs-lisp
+  (defadvice show-paren-function
+      (after show-matching-paren-offscreen activate)
+    "If the matching paren is offscreen, show the matching line in the
+          echo area. Has no effect if the character before point is not of
+          the syntax class ')'."
+    (interactive)
+    (let* ((cb (char-before (point)))
+           (matching-text (and cb
+                               (char-equal (char-syntax cb) ?\) )
+                               (blink-matching-open))))
+      (when matching-text (message matching-text))))
+#+END_SRC
+
+*** Untabify
+
+The following defines a function to untabify the entire buffer except if its major mode is makefile-mode or one of its derivatives.
+
+#+BEGIN_SRC emacs-lisp
+  (defun untabify-except-makefiles ()
+    "Replace tabs with spaces except in makefiles."
+    (unless (derived-mode-p 'makefile-mode)
+      (untabify (point-min) (point-max))))
+#+END_SRC
+
+** Shell
+
+*** Run current script [fn:4]
+
+Here's a emacs command that execute the current file. (assuming it is a python script, ruby script, bash script, golang, racket lisp, or other languages.)
+
+#+BEGIN_SRC emacs-lisp
+  (defun xah-run-current-file ()
+    "Execute the current file.
+  For example, if the current buffer is x.py, then it'll call 「python x.py」 in a shell. Output is printed to message buffer.
+  The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, TypeScript, Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
+  File suffix is used to determine what program to run.
+
+  If the file is modified or not saved, save it automatically before run.
+
+  URL `
+  Version 2017-02-10"
+    (interactive)
+    (let (
+          (-suffix-map
+           ;; (‹extension› . ‹shell program name›)
+           `(
+             ("php" . "php")
+             ("pl" . "perl")
+             ("py" . "python")
+             ("py3" . ,(if (string-equal system-type "windows-nt") "c:/Python32/python.exe" "python3"))
+             ("rb" . "ruby")
+             ("go" . "go run")
+             ("js" . "node") ; node.js
+             ("ts" . "tsc --alwaysStrict --lib DOM,ES2015,DOM.Iterable,ScriptHost --target ES5") ; TypeScript
+             ("sh" . "bash")
+             ("clj" . "java -cp /home/xah/apps/clojure-1.6.0/clojure-1.6.0.jar clojure.main")
+             ("rkt" . "racket")
+             ("ml" . "ocaml")
+             ("vbs" . "cscript")
+             ("tex" . "pdflatex")
+             ("latex" . "pdflatex")
+             ("java" . "javac")
+             ;; ("pov" . "/usr/local/bin/povray +R2 +A0.1 +J1.2 +Am2 +Q9 +H480 +W640")
+             ))
+          -fname
+          -fSuffix
+          -prog-name
+          -cmd-str)
+      (when (not (buffer-file-name)) (save-buffer))
+      (when (buffer-modified-p) (save-buffer))
+      (setq -fname (buffer-file-name))
+      (setq -fSuffix (file-name-extension -fname))
+      (setq -prog-name (cdr (assoc -fSuffix -suffix-map)))
+      (setq -cmd-str (concat -prog-name " \""   -fname "\""))
+      (cond
+       ((string-equal -fSuffix "el") (load -fname))
+       ((string-equal -fSuffix "java")
+        (progn
+          (shell-command -cmd-str "*xah-run-current-file output*" )
+          (shell-command
+           (format "java %s" (file-name-sans-extension (file-name-nondirectory -fname))))))
+       (t (if -prog-name
+              (progn
+                (message "Running…")
+                (shell-command -cmd-str "*xah-run-current-file output*" ))
+            (message "No recognized program file suffix for this file."))))))
+#+END_SRC
+
+** Other
+
+* Hooks
+** Hideshow
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
+  (add-hook 'lisp-mode-hook       'hs-minor-mode)
+  (add-hook 'c-mode-common-hook   'hs-minor-mode)
+  (add-hook 'java-mode-hook       'hs-minor-mode)
+  (add-hook 'perl-mode-hook       'hs-minor-mode)
+  (add-hook 'sh-mode-hook         'hs-minor-mode)
+  (add-hook 'ruby-mode-hook       'hs-minor-mode)
+#+END_SRC
+
+** Other
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'before-save-hook 'untabify-except-makefiles)
+#+END_SRC
+
+* Extra
+** Non-Windows Systems
+#+BEGIN_SRC emacs-lisp
+  (unless window-system
+    (add-hook 'linum-before-numbering-hook
+              (lambda ()
+                (setq-local linum-format-fmt
+                            (let ((w (length (number-to-string
+                                              (count-lines (point-min) (point-max))))))
+                              (concat "%" (number-to-string w) "d"))))))
+
+  (defun linum-format-func (line)
+    (concat
+     (propertize (format linum-format-fmt line) 'face 'linum)
+     (propertize " " 'face 'mode-line)))
+
+  (unless window-system
+    (setq linum-format 'linum-format-func))
+#+END_SRC
+
+
+* Footnotes
+
+[fn:1] Taken from [[https:///www.emacswiki.org/emacs/AlignCommands][EmacsWiki : Align Commands]]
+
+[fn:2] Taken from [[https://www.emacswiki.org/emacs/FindFileAtPoint][EmacsWiki : Find File At Point]]
+
+[fn:3] Taken from [[https://www.emacswiki.org/emacs/ShowParenMode][EmacsWiki : Show Paren Mode]]
+
+[fn:4] Taken from [[http://ergoemacs.org/emacs/elisp_run_current_file.html][Ergo Emacs : Run Current File]]
